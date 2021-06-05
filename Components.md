@@ -8,95 +8,6 @@
 - name: "EmbeddingIntentClassifier"
 
 
-## State of the ART Models
-
-There are currently many state of the art models for NLP, but these have proven to be efficient.
-
-- BERT
-- RoBERTa
-- DistilBERT
-- XLNET
-
-
-![alt text](https://github.com/SandeepKiran0022/RASA_DOC/blob/master/performance.png)
-
-![alt_test](https://github.com/SandeepKiran0022/RASA_DOC/blob/master/perf2.png)
-
-
-## So which one to use?
- 
-If you really need a faster inference speed but can compromise few-% on prediction metrics, DistilBERT is a starting reasonable choice, however, if you are looking for the best prediction metrics, you’ll be better off with Facebook’s RoBERTa.
-
-Theoratically, XLNet’s permutation based training should handle dependencies well, and might work better in longer-run.
-
-However, Google’s BERT does serve a good baseline to work with and if you don't have any of the above critical needs, you can keep your systems running with BERT.
-
- 
-## Thus, for most of the components BERT will be used as a State of the Art Model.
-
-
-## BERT
-
-### How BERT works?
-
-- BERT makes use of Transformer, an attention mechanism that learns contextual relations between words (or sub-words) in a text. In its vanilla form, Transformer includes two separate mechanisms — an encoder that reads the text input and a decoder that produces a prediction for the task. Since BERT’s goal is to generate a language model, only the encoder mechanism is necessary. The detailed workings of Transformer are described in a paper by Google.
-
-- As opposed to directional models, which read the text input sequentially (left-to-right or right-to-left), the Transformer encoder reads the entire sequence of words at once. Therefore it is considered bidirectional, though it would be more accurate to say that it’s non-directional. This characteristic allows the model to learn the context of a word based on all of its surroundings (left and right of the word).
-
-- The chart below is a high-level description of the Transformer encoder. The input is a sequence of tokens, which are first embedded into vectors and then processed in the neural network. The output is a sequence of vectors of size H, in which each vector corresponds to an input token with the same index.
-
-- When training language models, there is a challenge of defining a prediction goal. Many models predict the next word in a sequence (e.g. “The child came home from ___”), a directional approach which inherently limits context learning. To overcome this challenge, BERT uses two training strategies:
-
-## - Masked LM (MLM)
-
-Before feeding word sequences into BERT, 15% of the words in each sequence are replaced with a [MASK] token. The model then attempts to predict the original value of the masked words, based on the context provided by the other, non-masked, words in the sequence. In technical terms, the prediction of the output words requires:
-Adding a classification layer on top of the encoder output.
-
-
-Multiplying the output vectors by the embedding matrix, transforming them into the vocabulary dimension.
-Calculating the probability of each word in the vocabulary with softmax.
-
-
-![alt_text](https://github.com/SandeepKiran0022/RASA_DOC/blob/master/pic3.png)
-
-The BERT loss function takes into consideration only the prediction of the masked values and ignores the prediction of the non-masked words. As a consequence, the model converges slower than directional models, a characteristic which is offset by its increased context awareness.
-
-## - Next Sentence Prediction (NSP)
-
-
-In the BERT training process, the model receives pairs of sentences as input and learns to predict if the second sentence in the pair is the subsequent sentence in the original document. During training, 50% of the inputs are a pair in which the second sentence is the subsequent sentence in the original document, while in the other 50% a random sentence from the corpus is chosen as the second sentence. The assumption is that the random sentence will be disconnected from the first sentence.
-
-To help the model distinguish between the two sentences in training, the input is processed in the following way before entering the model:
-
-- A [CLS] token is inserted at the beginning of the first sentence and a [SEP] token is inserted at the end of each sentence.
-
-- A sentence embedding indicating Sentence A or Sentence B is added to each token. Sentence embeddings are similar in concept to token embeddings with a vocabulary of 2.
-
-- A positional embedding is added to each token to indicate its position in the sequence. The concept and implementation of positional embedding are presented in the Transformer paper.
-
-
-![alt_text](https://github.com/SandeepKiran0022/RASA_DOC/blob/master/pic4.png)
-
-
-To predict if the second sentence is indeed connected to the first, the following steps are performed:
-
-- The entire input sequence goes through the Transformer model.
-
-- The output of the [CLS] token is transformed into a 2×1 shaped vector, using a simple classification layer (learned matrices of weights and biases).
-
-- Calculating the probability of IsNextSequence with softmax.
-When training the BERT model, Masked LM and Next Sentence Prediction are trained together, with the goal of minimizing the combined loss function of the two strategies.
-
-
-## Takeaways
-
-- Model size matters, even at huge scale. BERT_large, with 345 million parameters, is the largest model of its kind. It is demonstrably superior on small-scale tasks to BERT_base, which uses the same architecture with “only” 110 million parameters.
-
-- With enough training data, more training steps == higher accuracy. For instance, on the MNLI task, the BERT_base accuracy improves by 1.0% when trained on 1M steps (128,000 words batch size) compared to 500K steps with the same batch size.
-
-- BERT’s bidirectional approach (MLM) converges slower than left-to-right approaches (because only 15% of words are predicted in each batch) but bidirectional training still outperforms left-to-right training after a small number of pre-training steps.
-
-
 ## Tokenization
 
 - Tokenization is the process of tokenizing or splitting a string, text into a list of tokens. One can think of token as parts like a word is a token in a sentence, and a sentence is a token in a paragraph.
@@ -194,27 +105,6 @@ Description:	Creates tokens using the spacy tokenizer. Can be used to define tok
 
 ```
 
-### - State of the ART Model for tokenization
-
-- We can see that BERT provides tokenization , but generally ``` White space tokenizer ``` is efficient than BERT's tokenization as a service.
-
-- BERT Tokenization as a service ( sample code)
-
-Often you want to use your own tokenizer to segment sentences instead of the default one from BERT. Simply call encode(is_tokenized=True) on the client slide as follows:
-
-```
-texts = ['hello world!', 'good day']
-
-# a naive whitespace tokenizer
-texts2 = [s.split() for s in texts]
-
-vecs = bc.encode(texts2, is_tokenized=True)
-
-``` 
-
-This gives [2, 25, 768] tensor where the first [1, 25, 768] corresponds to the token-level encoding of “hello world!”. If you look into its values, you will find that only the first four elements, i.e. [1, 0:3, 768] have values, all the others are zeros. 
-
-This is due to the fact that BERT considers “hello world!” as four tokens: [CLS] hello world! [SEP], the rest are padding symbols and are masked out before output.
 
 
 ## Entity Extraction
@@ -399,16 +289,6 @@ Configuration:
 ![alt_text](https://github.com/SandeepKiran0022/RASA_DOC/blob/master/pic5.png)
 
 
-## State of the ART Models for Entity Extraction
-
-- ```Google BERT NER```: BERT (Bidirectional Encoder Representations from Transformers) is pre-training language representations, trained with large text corpus and use that model for NLP tasks like(NLU, NER). BERT pre-trained representations are contextual representations with deeply bidirectional. This uses both its left and right context. These representations are fine-tuned for respective custom NLP tasks. 
-
-
-### Advantages of Google BERT over CRF NER algorithm
-
-- The data augmentation on entity label values can be eliminated as BERT use the word embeddings. Which helps in the training data size as augmentation size is reduced comparatively from CRF NER.
-
-
 
 ## Entity Synonym Mapper
 
@@ -442,8 +322,6 @@ Configuration:
 
 - This component will allow you to map the entities New York City and NYC to nyc. The entitiy extraction will return nyc even though the message contains NYC. When this component changes an exisiting entity, it appends itself to the processor list of this entity.
 
-
-## State of a Art model is not required for  entity synonym mapper.
 
 ## Text Featurizers
 
@@ -582,33 +460,6 @@ pipeline:
 
 - The best Text Featurizer component in RASA , would be ``` Count Vectors Featurizer``` , because of its sparse featurization technique.
 
-## State of the ART Model for Text Featurization
-
-
-- Bag-of-word(BoW) models for vectorizing documents don’t take care of the semantics of the document. There are several other techniques which take care of these shortcomings:
-
-- The main difference between the word embeddings of Word2vec, Glove, ELMo and BERT is that
-
-- Word2vec and Glove word embeddings are context independent- these models output just one vector (embedding) for each word, combining all the different senses of the word into one vector.
-
-- That is the one numeric representation of a word (which we call embedding/vector) regardless of where the words occurs in a sentence and regardless of the different meanings they may have. For instance, after we train word2vec/Glove on a corpus (unsupervised training - no labels needed) we get as output one vector representation for, say the word “cell”. So even if we had a sentence like “He went to the prison cell with his cell phone to extract blood cell samples from inmates”, where the word cell has different meanings based on the sentence context, these models just collapse them all into one vector for “cell” in their output.
-
-- ELMo and BERT can generate different word embeddings for a word that captures the context of a word - that is its position in a sentence.
-
-- For instance, for the same example above “He went to the prison cell with his cell phone to extract blood cell samples from inmates”, both Elmo and BERT would generate different vectors for the three vectors for cell. The first cell (prison cell case) , for instance would be closer to words like incarceration, crime etc. whereas the second “cell” (phone case) would be closer to words like iphone, android, galaxy etc..
-
-- The main difference above is a consequence of the fact Word2vec and Glove do not take into account word order in their training - ELMo and BERT take into account word order (ELMo uses LSTMS; BERT uses Transformer - an attention based model with positional encodings to represent word positions).
-
-- A practical implication of this difference is that we can use word2vec and Glove vectors trained on a large corpus directly for downstream tasks. All we need is the vectors for the words. There is no need for the model itself that was used to train these vectors.
-
-- However, in the case of ELMo and BERT, since they are context dependent, we need the model that was used to train the vectors even after training, since the models generate the vectors for a word based on context. We can just use the context independent vectors for a word if we choose too (just feed in a word standalone to the model and get its vector) , but would defeat the very purpose/advantage of these models. Figure below captures this latest trend of using word embeddings along with the models they were trained on for downstream tasks
-
-
-![alt_text](https://qphs.fs.quoracdn.net/main-qimg-b46d83b2eee2d5875f469b22a494db6e)
-
-![alt_text](https://qphs.fs.quoracdn.net/main-qimg-fa496d9bfaa72f614d4cbae0c75f89cc)
-
-- ``` Thus, BERT word embeddings could be used as it is better than ELMo and can also lead to better intent classification ```
 
 ## Intent Classification
 
@@ -736,14 +587,3 @@ pipeline:
 - Otherwise, ``` Embedding Intent Classifier ``` is the best classifier becuase , it adapts to your domain specific messages as there are e.g. no missing word embeddings. Also it is inherently language independent and you are not reliant on good word embeddings for a certain language. Another great feature of this classifier is that it supports messages with multiple intents as described above. In general this makes it a very flexible classifier for advanced use cases.
 
 ![alt_text](https://blog.rasa.com/content/images/2019/02/image-1.png)
-
-## State of the art model for Intent classification
-
-```BERT```  pushed the state of the art in Natural Language Processing by combining two powerful technologies:
-
-- It is based on a deep Transformer network, a type of network that can process efficiently long texts by using attention.
-- It is bidirectional, meaning that it takes into account the whole text passage to understand the meaning of each word.
-
-### Comparsion between different chatbot platforms when tested on different corpus
-
-![alt_text](https://miro.medium.com/max/850/1*kdERCRUnrDNRX-4Q9Yhxuw.png)
